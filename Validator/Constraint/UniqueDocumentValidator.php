@@ -35,41 +35,6 @@ class UniqueDocumentValidator extends ConstraintValidator
         $this->mandango = $mandango;
     }
 
-    /**
-     * Validates the document uniqueness.
-     *
-     * @param value      $value   The document.
-     * @param Constraint $constraint The constraint.
-     *
-     * @return Boolean Whether or not the document is unique.
-     */
-    public function isValid($value, Constraint $constraint)
-    {
-        $document = $this->parseDocument($value);
-        $fields = $this->parseFields($constraint->fields);
-        $caseInsensitive = $this->parseCaseInsensitive($constraint->caseInsensitive);
-
-        $query = $this->createQuery($document, $fields, $caseInsensitive);
-        $numberResults = $query->count();
-
-        if (0 === $numberResults) {
-            return true;
-        }
-
-        if (1 === $numberResults) {
-            $result = $query->one();
-            if ($result === $document) {
-                return true;
-            }
-        }
-
-        if ($this->context) {
-            $this->addFieldViolation($fields[0], $constraint->message);
-        }
-
-        return false;
-    }
-
     private function parseDocument($document)
     {
         if (!$document instanceof Document) {
@@ -127,9 +92,42 @@ class UniqueDocumentValidator extends ConstraintValidator
 
     private function addFieldViolation($field, $message)
     {
-        $oldPath = $this->context->getPropertyPath();
-        $this->context->setPropertyPath(empty($oldPath) ? $field : $oldPath.'.'.$field);
-        $this->context->addViolation($message, array(), null);
-        $this->context->setPropertyPath($oldPath);
+        $this->context->addViolationAt($field, $message);
+    }
+
+    /**
+     * Validates the document uniqueness.
+     *
+     * @param value      $value   The document.
+     * @param Constraint $constraint The constraint.
+     *
+     * @return Boolean Whether or not the document is unique.
+     */
+    public function validate($value, Constraint $constraint)
+    {
+        $document = $this->parseDocument($value);
+        $fields = $this->parseFields($constraint->fields);
+        $caseInsensitive = $this->parseCaseInsensitive($constraint->caseInsensitive);
+
+        $query = $this->createQuery($document, $fields, $caseInsensitive);
+        $numberResults = $query->count();
+
+        if (0 === $numberResults) {
+            return true;
+        }
+
+        if (1 === $numberResults) {
+            $result = $query->one();
+            if ($result === $document) {
+                return true;
+            }
+        }
+
+        if ($this->context) {
+            $this->addFieldViolation($fields[0], $constraint->message);
+        }
+
+        return false;
     }
 }
+
