@@ -104,4 +104,11 @@ class MandangoTypeGuesser implements FormTypeGuesserInterface
     public function guessMinLength($class, $property)
     {
     }
+
+    /**
+     * @inheritdoc
+     */
+    public function guessPattern($class, $property)
+    {
+    }
 }
